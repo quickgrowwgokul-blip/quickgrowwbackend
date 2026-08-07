@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 
 const walletSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserDetails', required: true },
-  type: { type: String, enum: ['deposit', 'withdraw'], required: true },
+  
+  // UPDATED: Added 'investment' and 'interest' to the allowed types
+  type: { type: String, enum: ['deposit', 'withdraw', 'investment', 'interest'], required: true },
+  
   amount: { type: Number, required: true },
   
   // Deposit field

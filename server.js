@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const AdminDetails = require('./models/Admindetails');
+const startCronJobs = require('./utils/cronJobs');
 
 // Load environment variables
 dotenv.config();
@@ -37,11 +38,14 @@ app.use('/api/admin/wallet', require('./routes/adminwalletmanagement'));
 app.use('/api/bank', require('./routes/bankmanagement'));
 app.use('/api/admin/users', require('./routes/adminusertransactions'));
 app.use('/api/admin-bank', require('./routes/adminbankmanagement'));
+app.use('/api/investment', require('./routes/userinvestmentmanagement'));
 // --------------
 // --------------
 
 // Start the server
 const PORT = process.env.PORT || 5000;
+startCronJobs();
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
