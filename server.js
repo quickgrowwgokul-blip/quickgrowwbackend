@@ -39,6 +39,7 @@ app.use('/api/bank', require('./routes/bankmanagement'));
 app.use('/api/admin/users', require('./routes/adminusertransactions'));
 app.use('/api/admin-bank', require('./routes/adminbankmanagement'));
 app.use('/api/investment', require('./routes/userinvestmentmanagement'));
+app.use('/api/admin-investment', require('./routes/admininvestmentmanagement'));
 // --------------
 // --------------
 
