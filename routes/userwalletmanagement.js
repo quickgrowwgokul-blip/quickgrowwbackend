@@ -43,26 +43,40 @@ router.post('/deposit', authenticateToken, async (req, res) => {
   }
 });
 
-// 3. SUBMIT WITHDRAW REQUEST
+// 3. SUBMIT WITHDRAW REQUEST (WITH 1% TDS)
 router.post('/withdraw', authenticateToken, async (req, res) => {
   try {
     const { amount, bankName, branchName, accountNumber, ifscCode } = req.body;
-    if (!amount || !bankName || !branchName || !accountNumber || !ifscCode) {
+    const grossAmount = Number(amount);
+
+    if (!grossAmount || !bankName || !branchName || !accountNumber || !ifscCode) {
       return res.status(400).json({ message: 'All bank details and amount are required.' });
     }
 
     const user = await UserDetails.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.walletBalance < amount) return res.status(400).json({ message: 'Insufficient wallet balance, bro.' });
+    if (user.walletBalance < grossAmount) return res.status(400).json({ message: 'Insufficient wallet balance' });
 
-    user.walletBalance -= amount;
+    // Deduct the FULL gross amount from their wallet
+    user.walletBalance -= grossAmount;
     await user.save();
 
+    // Calculate TDS (1%) and Net Amount
+    const tdsAmount = grossAmount * 0.01;
+    const netAmount = grossAmount - tdsAmount;
+
     const newRequest = new Wallet({
-      userId: req.user.id, type: 'withdraw', amount, bankName, branchName, accountNumber, ifscCode, status: 'pending'
+      userId: req.user.id, 
+      type: 'withdraw', 
+      amount: grossAmount, 
+      tdsAmount: tdsAmount, 
+      netAmount: netAmount, 
+      bankName, branchName, accountNumber, ifscCode, 
+      status: 'pending'
     });
     await newRequest.save();
-    res.status(201).json({ message: 'Withdraw request submitted! Amount placed on hold.' });
+    
+    res.status(201).json({ message: `Withdraw request submitted! Net payable: ₹${netAmount}` });
   } catch (error) {
     res.status(500).json({ message: 'Server error submitting withdrawal.', error: error.message });
   }
@@ -71,7 +85,6 @@ router.post('/withdraw', authenticateToken, async (req, res) => {
 // 4. GET USER TRANSACTION HISTORY
 router.get('/history', authenticateToken, async (req, res) => {
   try {
-    // Fetch user's requests and sort by newest first
     const history = await Wallet.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json(history);
   } catch (error) {
